@@ -25,7 +25,8 @@ clean_name() {
 
 DB_NAME="wp_$(clean_name "${DOMAIN}")"
 DB_USER="${DB_NAME}_user"   # dedicated db user per-domain (safer than changing mysql root)
-DB_PASS=$(tr -dc 'A-Za-z0-9!@#$%^&*()_+' < /dev/urandom | head -c 12)
+# Allowed characters only: a7@#$%*&
+DB_PASS=$(tr -dc 'a7@#$%*&' < /dev/urandom | head -c 12)
 
 echo "=== Starting install for ${DOMAIN} ==="
 
