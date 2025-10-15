@@ -3,12 +3,12 @@
 # Usage: sudo ./wp-install-single.sh example.com
 set -euo pipefail
 
-if [ "$#" -ne 1 ]; then
-  echo "Usage: sudo $0 <domain>"
-  exit 2
+if [ "$#" -ge 1 ]; then
+  DOMAIN="$1"
+else
+  read -p "Enter your domain name (e.g. example.com): " DOMAIN
 fi
 
-DOMAIN="$1"
 CERT_EMAIL="admin@${DOMAIN}"   # change if you want a different cert email
 WEB_ROOT="/var/www/${DOMAIN}/public_html"
 APACHE_CONF="/etc/apache2/sites-available/${DOMAIN}.conf"
