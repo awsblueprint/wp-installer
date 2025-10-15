@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # wp-install-single.sh
-# Usage: sudo ./wp-install-single.sh example.com
+#... Usage: sudo ./wp-install-single.sh example.com
 set -euo pipefail
 
 if [ "$#" -ne 1 ]; then
