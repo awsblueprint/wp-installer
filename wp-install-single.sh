@@ -112,10 +112,12 @@ cp wp-config-sample.php wp-config.php
 # Escape single quotes in DB password for Perl
 DB_PASS_ESCAPED=$(printf '%s\n' "$DB_PASS" | sed "s/'/'\\\\''/g")
 
-# Insert DB credentials safely
+ 
+
+# Escape DB password using Perl q() notation
 perl -i -pe "s/define\(\s*'DB_NAME'.*/define('DB_NAME', '${DB_NAME}');/" wp-config.php
 perl -i -pe "s/define\(\s*'DB_USER'.*/define('DB_USER', '${DB_USER}');/" wp-config.php
-perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', '${DB_PASS_ESCAPED}');/" wp-config.php
+perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', q(${DB_PASS}));/" wp-config.php
 
 
 # Set secure keys: fetch from WordPress API and replace placeholder block
