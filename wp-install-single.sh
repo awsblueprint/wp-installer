@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# wp-install-single.sh
+#. wp-install-single.sh
 # Usage: sudo ./wp-install-single.sh
 
 set -euo pipefail
