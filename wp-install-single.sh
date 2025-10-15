@@ -113,7 +113,8 @@ if [ ! -f wp-config.php ]; then
     cp wp-config-sample.php wp-config.php
     perl -i -pe "s/define\(\s*'DB_NAME'.*/define('DB_NAME', '${DB_NAME}');/" wp-config.php
     perl -i -pe "s/define\(\s*'DB_USER'.*/define('DB_USER', '${DB_USER}');/" wp-config.php
-    perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', q(${DB_PASS}));/" wp-config.php
+ESCAPED_DB_PASS=$(printf "%s" "$DB_PASS" | sed "s/'/'\\\\''/g")
+perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', '${ESCAPED_DB_PASS}');/" wp-config.php
 
     SALT=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
     perl -0777 -i -pe "s/define\('AUTH_KEY'.*?define\('NONCE_SALT'.*?\);\n/${SALT}\n/s" wp-config.php || echo "${SALT}" >> wp-config.php
