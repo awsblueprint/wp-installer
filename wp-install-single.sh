@@ -10,9 +10,9 @@ else
 fi
 
 CERT_EMAIL="admin@${DOMAIN}"   # change if needed
-WEB_ROOT="/var/www/${DOMAIN}/public_html"
-APACHE_CONF="/etc/apache2/sites-available/${DOMAIN}.conf"
-CRED_FILE="/root/.${DOMAIN}_db_creds"
+WEB_ROOT="/var/www/html"
+APACHE_CONF="/etc/apache2/sites-available/000-default.conf"
+CRED_FILE="/root/.html_db_creds"
 PHP_UPLOAD_LIMIT="64M"
 POST_MAX_SIZE="64M"
 MEMORY_LIMIT="256M"
@@ -27,7 +27,7 @@ DB_USER="${DB_NAME}_user"
 
 # Generate DB password only if it doesn't exist
 if [ ! -f "${CRED_FILE}" ]; then
-    DB_PASS=$(tr -dc 'a7@#$%*&' < /dev/urandom | head -c 12)
+    DB_PASS=$(tr -dc 'a-zA-Z0-9@#$%*&' < /dev/urandom | head -c 12)
 else
     source "${CRED_FILE}"
 fi
@@ -40,30 +40,15 @@ if ! dpkg -s apache2 mysql-server php >/dev/null 2>&1; then
     apt install -y apache2 mysql-server php libapache2-mod-php php-mysql unzip certbot python3-certbot-apache php-curl php-mbstring php-xml php-xmlrpc php-gd php-zip php-bcmath php-intl
 fi
 
-# 2️⃣ Apache config, webroot, vhost
+# 2️⃣ Apache config, webroot
 mkdir -p "${WEB_ROOT}"
-chown -R www-data:www-data "/var/www/${DOMAIN}"
-chmod 2755 "/var/www/${DOMAIN}"
+chown -R www-data:www-data "${WEB_ROOT}"
+chmod 755 "${WEB_ROOT}"
 
-if [ ! -f "${APACHE_CONF}" ]; then
-cat > "${APACHE_CONF}" <<EOF
-<VirtualHost *:80>
-    ServerName ${DOMAIN}
-    ServerAlias www.${DOMAIN}
-    DocumentRoot ${WEB_ROOT}
-    <Directory ${WEB_ROOT}>
-        Options Indexes FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-    ErrorLog \${APACHE_LOG_DIR}/${DOMAIN}_error.log
-    CustomLog \${APACHE_LOG_DIR}/${DOMAIN}_access.log combined
-</VirtualHost>
-EOF
-    a2ensite "${DOMAIN}.conf"
-    sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf || true
-    systemctl reload apache2
-fi
+sed -i "s|DocumentRoot .*|DocumentRoot ${WEB_ROOT}|" "${APACHE_CONF}"
+sed -i "s|<Directory .*|<Directory ${WEB_ROOT}|" "${APACHE_CONF}" || true
+sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf || true
+systemctl reload apache2
 
 # 3️⃣ PHP limits
 for php_ini in /etc/php/*/apache2/php.ini; do
@@ -113,8 +98,8 @@ if [ ! -f wp-config.php ]; then
     cp wp-config-sample.php wp-config.php
     perl -i -pe "s/define\(\s*'DB_NAME'.*/define('DB_NAME', '${DB_NAME}');/" wp-config.php
     perl -i -pe "s/define\(\s*'DB_USER'.*/define('DB_USER', '${DB_USER}');/" wp-config.php
-ESCAPED_DB_PASS=$(printf "%s" "$DB_PASS" | sed "s/'/'\\\\''/g")
-perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', '${ESCAPED_DB_PASS}');/" wp-config.php
+    ESCAPED_DB_PASS=$(printf "%s" "$DB_PASS" | sed "s/'/'\\\\''/g")
+    perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', '${ESCAPED_DB_PASS}');/" wp-config.php
 
     SALT=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
     perl -0777 -i -pe "s/define\('AUTH_KEY'.*?define\('NONCE_SALT'.*?\);\n/${SALT}\n/s" wp-config.php || echo "${SALT}" >> wp-config.php
@@ -138,10 +123,12 @@ certbot --apache -n --agree-tos --email "${CERT_EMAIL}" -d "${DOMAIN}" -d "www.$
 # 10️⃣ Final Apache reload
 systemctl reload apache2 || systemctl restart apache2
 
-echo "=== Done ==="
-echo "Website files: ${WEB_ROOT}"
-echo "DB name: ${DB_NAME}"
-echo "DB user: ${DB_USER}"
-echo "DB credentials: saved in ${CRED_FILE} (owner-only)"
-echo "To view credentials: sudo cat ${CRED_FILE}"
-echo "Visit: http://${DOMAIN}/wp-admin/install.php or https://${DOMAIN}/wp-admin/install.php"
+# Replace the final echo section with this:
+
+GREEN="\e[32m"
+RESET="\e[0m"
+URL="https://${DOMAIN}/wp-admin/install.php"
+
+echo -e "=== Done ==="
+ 
+echo -e "Visit: \e]8;;${URL}\a${GREEN}${URL}${RESET}\e]8;;\a"
