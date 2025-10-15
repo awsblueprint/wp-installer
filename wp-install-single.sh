@@ -109,9 +109,14 @@ cp wp-config-sample.php wp-config.php
 
 # Insert DB credentials
 # Use perl (safe for slash-containing passwords)
+# Escape single quotes in DB password for Perl
+DB_PASS_ESCAPED=$(printf '%s\n' "$DB_PASS" | sed "s/'/'\\\\''/g")
+
+# Insert DB credentials safely
 perl -i -pe "s/define\(\s*'DB_NAME'.*/define('DB_NAME', '${DB_NAME}');/" wp-config.php
 perl -i -pe "s/define\(\s*'DB_USER'.*/define('DB_USER', '${DB_USER}');/" wp-config.php
-perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', '${DB_PASS}');/" wp-config.php
+perl -i -pe "s/define\(\s*'DB_PASSWORD'.*/define('DB_PASSWORD', '${DB_PASS_ESCAPED}');/" wp-config.php
+
 
 # Set secure keys: fetch from WordPress API and replace placeholder block
 SALT=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
